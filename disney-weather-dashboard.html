@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disney Parks - Weather Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --disney-blue: #0051ba;
+            --disney-gold: #ffd700;
+            --disney-light-blue: #4a90e2;
+            --disney-white: #ffffff;
+            --disney-cream: #faf8f3;
+            --warning: #ff6b35;
+            --danger: #dc143c;
+            --success: #2ecc71;
+            --bg-dark: #001f3f;
+            --bg-gradient-start: #003366;
+            --bg-gradient-end: #001a33;
+            --text-light: #ffffff;
+            --text-dark: #001f3f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 10px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--disney-blue) 0%, #003d82 100%);
+            border: 3px solid var(--disney-gold);
+            border-radius: 8px;
+            padding: 25px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '✨';
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 30px;
+            opacity: 0.6;
+        }
+
+        .header::after {
+            content: '✨';
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            opacity: 0.6;
+        }
+
+        .header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            color: var(--disney-gold);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            color: var(--disney-cream);
+            letter-spacing: 1px;
+        }
+
+        .station-info {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid var(--disney-gold);
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 600;
+            color: var(--disney-gold);
+            font-size: 13px;
+        }
+
+        .station-fallback {
+            color: var(--warning);
+        }
+
+        .station-old {
+            color: var(--warning);
+        }
+
+        .refresh-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--disney-gold);
+            border-radius: 4px;
+            font-size: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .refresh-bar button {
+            padding: 10px 20px;
+            background: var(--disney-gold);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .refresh-bar button:hover {
+            background: #ffed4e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Alerts Section */
+        .alerts-section {
+            margin-bottom: 15px;
+        }
+
+        .alert {
+            background: #dc143c;
+            border: 3px solid #8b0000;
+            border-radius: 8px;
+            padding: 20px 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 16px rgba(220, 20, 60, 0.4);
+            animation: pulseAlert 2s ease-in-out infinite;
+            color: #ffffff;
+        }
+
+        @keyframes pulseAlert {
+            0%, 100% { box-shadow: 0 8px 16px rgba(220, 20, 60, 0.4); }
+            50% { box-shadow: 0 8px 24px rgba(220, 20, 60, 0.6); }
+        }
+
+        .alert.warning {
+            background: #dc143c;
+            border-color: #8b0000;
+        }
+
+        .alert.watch {
+            background: #ffa500;
+            border-color: #ff8c00;
+            color: #000000;
+            animation: none;
+        }
+
+        .alert.advisory {
+            background: #9370db;
+            border-color: #6a5acd;
+            animation: none;
+        }
+
+        .alert h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .alert-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+
+        .alert-meta span {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .alert p {
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .no-alerts {
+            background: linear-gradient(135deg, var(--success) 0%, #27ae60 100%);
+            color: #ffffff;
+            padding: 25px;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            border: 3px solid #27ae60;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(0, 81, 186, 0.3) 0%, rgba(0, 51, 102, 0.3) 100%);
+            border: 2px solid var(--disney-light-blue);
+            border-radius: 8px;
+            padding: 20px 15px;
+            box-shadow: 0 8px 16px rgba(74, 144, 226, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--disney-gold);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Current Conditions */
+        .current-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .metric {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 18px;
+            border-left: 4px solid var(--disney-gold);
+            border-radius: 4px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--disney-cream);
+        }
+
+        .metric-value {
+            font-family: 'Cinzel', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--disney-gold);
+            line-height: 1;
+        }
+
+        .metric-value.large {
+            font-size: 52px;
+        }
+
+        .metric-unit {
+            font-size: 20px;
+            opacity: 0.9;
+            margin-left: 4px;
+        }
+
+        .obs-metadata {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 215, 0, 0.3);
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .obs-metadata div {
+            margin: 5px 0;
+        }
+
+        .wind-alert {
+            border-left-color: var(--danger);
+            background: rgba(220, 20, 60, 0.3);
+            animation: pulseWind 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseWind {
+            0%, 100% { background: rgba(220, 20, 60, 0.3); }
+            50% { background: rgba(220, 20, 60, 0.45); }
+        }
+
+        /* NDFD Table */
+        .hrrr-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .hrrr-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 500px;
+        }
+
+        .hrrr-table th {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 10px;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 3px solid var(--disney-gold);
+            font-size: 12px;
+            color: var(--disney-gold);
+        }
+
+        .hrrr-table td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .hrrr-table tr:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .hour-cell {
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--disney-gold);
+        }
+
+        .temp-cell {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--disney-gold);
+        }
+
+        .wind-cell {
+            font-weight: 600;
+        }
+
+        .wind-high {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .precip-cell {
+            font-weight: 600;
+        }
+
+        .precip-high {
+            color: var(--warning);
+            font-weight: 700;
+        }
+
+        /* Forecast Section */
+        .forecast-period {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--disney-gold);
+            border-radius: 4px;
+        }
+
+        .forecast-period h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--disney-gold);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .forecast-temp {
+            font-family: 'Cinzel', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--disney-gold);
+            margin: 10px 0;
+        }
+
+        .forecast-wind {
+            color: var(--warning);
+            font-weight: 600;
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .forecast-detail {
+            line-height: 1.6;
+            font-size: 14px;
+            margin-top: 10px;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .forecast-timestamp {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid var(--disney-gold);
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .forecast-timestamp strong {
+            color: var(--disney-gold);
+        }
+
+        /* SPC/WPC Outlooks Table */
+        .outlook-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .outlook-table th {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px 8px;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            font-size: 13px;
+            color: var(--disney-gold);
+        }
+
+        .outlook-table td {
+            padding: 15px 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .outlook-table tr:first-child th:first-child {
+            background: rgba(0, 0, 0, 0.5);
+            text-align: left;
+            font-size: 11px;
+            color: var(--disney-gold);
+        }
+
+        .outlook-row-label {
+            text-align: left !important;
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .outlook-tstm {
+            background: rgba(255, 165, 0, 0.2);
+        }
+
+        .outlook-marginal {
+            background: rgba(0, 100, 0, 0.3);
+            color: #90ee90;
+        }
+
+        .outlook-slight {
+            background: rgba(255, 255, 0, 0.3);
+            color: #ffff00;
+        }
+
+        .outlook-enhanced {
+            background: rgba(255, 140, 0, 0.3);
+            color: #ffa500;
+        }
+
+        .outlook-moderate {
+            background: rgba(255, 0, 0, 0.3);
+            color: #ff6b6b;
+        }
+
+        .outlook-high {
+            background: rgba(255, 0, 255, 0.3);
+            color: #ff00ff;
+        }
+
+        .outlook-none {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Radar Section */
+        .radar-container {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .radar-container img {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border: 2px solid var(--disney-gold);
+            border-radius: 4px;
+        }
+
+        .radar-timestamp {
+            margin-top: 10px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            letter-spacing: 1px;
+            color: var(--disney-gold);
+        }
+
+        .error {
+            background: rgba(220, 20, 60, 0.3);
+            color: var(--text-light);
+            padding: 20px;
+            border-left: 4px solid var(--danger);
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        @media (max-width: 1200px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .current-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 26px;
+            }
+            
+            .header .subtitle {
+                font-size: 12px;
+            }
+            
+            .card h2 {
+                font-size: 18px;
+            }
+            
+            .alert h3 {
+                font-size: 18px;
+            }
+            
+            .hrrr-table {
+                font-size: 11px;
+            }
+            
+            .hrrr-table th, .hrrr-table td {
+                padding: 8px 5px;
+            }
+            
+            .outlook-table {
+                font-size: 11px;
+            }
+            
+            .outlook-table th, .outlook-table td {
+                padding: 10px 5px;
+            }
+        }
+
+        /* Substack Link Section */
+        .substack-section {
+            background: linear-gradient(135deg, rgba(0, 81, 186, 0.3) 0%, rgba(0, 51, 102, 0.3) 100%);
+            border: 2px solid var(--disney-gold);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: 0 8px 16px rgba(255, 215, 0, 0.3);
+        }
+
+        .substack-section h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            color: var(--disney-gold);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .substack-section p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+
+        .substack-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: var(--disney-gold);
+            color: var(--text-dark);
+            text-decoration: none;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 1px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+        }
+
+        .substack-button:hover {
+            background: #ffed4e;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(255, 215, 0, 0.6);
+        }
+
+        /* Version Number */
+        .version-info {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            opacity: 0.6;
+            color: var(--disney-cream);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏰 Disney Parks Weather Dashboard</h1>
+            <div class="subtitle">Hollywood Studios - Live Conditions & Forecast</div>
+            <div class="station-info" id="stationInfo">Loading station...</div>
+        </div>
+
+        <div class="refresh-bar">
+            <div id="refreshTime">Initializing...</div>
+            <button onclick="refreshData()">🔄 Refresh All Data</button>
+        </div>
+
+        <!-- ALERTS - TOP PRIORITY -->
+        <div class="alerts-section">
+            <div class="card full-width">
+                <h2>⚠️ Active Alerts & Warnings</h2>
+                <div id="alerts" class="loading">Loading alerts...</div>
+            </div>
+        </div>
+
+        <!-- CURRENT CONDITIONS & OUTLOOKS -->
+        <div class="grid">
+            <div class="card">
+                <h2>📊 Current Conditions</h2>
+                <div id="currentConditions" class="loading">Loading observations...</div>
+            </div>
+
+            <div class="card">
+                <h2>🌩️ SPC/WPC Outlooks</h2>
+                <div id="outlooks" class="loading">Loading outlooks...</div>
+            </div>
+        </div>
+
+        <!-- RADAR -->
+        <div class="card full-width">
+            <h2>📡 KMLB Radar</h2>
+            <div id="radar" class="loading">Loading radar...</div>
+        </div>
+
+        <!-- NDFD 12-HOUR FORECAST -->
+        <div class="card full-width">
+            <h2>📈 NDFD 12-Hour Forecast</h2>
+            <div id="hrrr" class="loading">Loading NDFD data...</div>
+        </div>
+
+        <!-- NWS 5-DAY FORECAST -->
+        <div class="card full-width">
+            <h2>📅 NWS 5-Day Forecast</h2>
+            <div id="forecast" class="loading">Loading forecast...</div>
+        </div>
+
+        <!-- SUBSTACK SIGNUP -->
+        <div class="substack-section">
+            <h3>📧 Get Weather Updates</h3>
+            <p>Subscribe to PompanoWx for weekday, weekend, and special weather report mailings</p>
+            <a href="https://pompanowx.substack.com/" target="_blank" class="substack-button">Subscribe to PompanoWx</a>
+        </div>
+
+        <!-- VERSION INFO -->
+        <div class="version-info">
+            Disney Parks Weather Dashboard v0.4
+        </div>
+    </div>
+
+    <script>
+        // Station fallback order for Disney/KISM area
+        const STATIONS = ['KISM', 'KMCO', 'KORL', 'KSFB'];
+        const PARK_LAT = 28.3574; // Hollywood Studios
+        const PARK_LON = -81.5582;
+        const MAX_OBS_AGE_HOURS = 2; // Maximum age of observation in hours
+        let currentStation = null;
+
+        async function fetchWithFallback() {
+            for (let station of STATIONS) {
+                try {
+                    const url = `https://api.weather.gov/stations/${station}/observations/latest`;
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const obs = data.properties;
+                        
+                        // Check observation age
+                        const obsTime = new Date(obs.timestamp);
+                        const now = new Date();
+                        const ageHours = (now - obsTime) / (1000 * 60 * 60);
+                        
+                        currentStation = station;
+                        const isOld = ageHours > MAX_OBS_AGE_HOURS;
+                        updateStationInfo(station, station !== STATIONS[0], isOld, ageHours);
+                        
+                        return obs;
+                    }
+                } catch (error) {
+                    console.log(`Station ${station} unavailable, trying next...`);
+                }
+            }
+            throw new Error('All stations unavailable');
+        }
+
+        function updateStationInfo(station, isFallback, isOld, ageHours) {
+            const stationInfo = document.getElementById('stationInfo');
+            let html = '';
+            
+            if (isOld) {
+                html = `<span class="station-old">⚠️ ${station} - Observation ${ageHours.toFixed(1)} hours old</span>`;
+            } else if (isFallback) {
+                html = `<span class="station-fallback">⚠️ Using Backup Station: ${station}</span>`;
+            } else {
+                html = `✓ Primary Station: ${station}`;
+            }
+            
+            stationInfo.innerHTML = html;
+        }
+
+        async function fetchWeatherData() {
+            try {
+                // Fetch observations with fallback
+                const obs = await fetchWithFallback();
+                displayCurrentConditions(obs);
+
+                // Fetch alerts
+                const alertsUrl = `https://api.weather.gov/alerts/active?point=${PARK_LAT},${PARK_LON}`;
+                const alertsResponse = await fetch(alertsUrl);
+                const alertsData = await alertsResponse.json();
+                displayAlerts(alertsData.features);
+
+                // Fetch hourly forecast for NDFD data
+                const pointsUrl = `https://api.weather.gov/points/${PARK_LAT},${PARK_LON}`;
+                const pointsResponse = await fetch(pointsUrl);
+                const pointsData = await pointsResponse.json();
+                
+                const hourlyUrl = pointsData.properties.forecastHourly;
+                const hourlyResponse = await fetch(hourlyUrl);
+                const hourlyData = await hourlyResponse.json();
+                displayHRRR(hourlyData.properties.periods);
+
+                // Fetch 5-day forecast
+                const forecastUrl = pointsData.properties.forecast;
+                const forecastResponse = await fetch(forecastUrl);
+                const forecastData = await forecastResponse.json();
+                
+                // Try to get timestamp from multiple possible fields
+                const timestamp = forecastData.properties.updated || 
+                                 forecastData.properties.updateTime || 
+                                 forecastData.properties.generatedAt ||
+                                 (forecastData.properties.periods && forecastData.properties.periods[0] ? 
+                                  forecastData.properties.periods[0].startTime : null);
+                
+                displayForecast(forecastData.properties.periods, timestamp);
+
+                // Fetch SPC and WPC outlooks
+                fetchOutlooks();
+
+                // Load radar
+                loadRadar();
+
+                updateRefreshTime();
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                document.getElementById('currentConditions').innerHTML = 
+                    '<div class="error">⚠️ ERROR: Unable to load weather data. All stations unavailable.</div>';
+                document.getElementById('stationInfo').innerHTML = 
+                    '<span class="station-fallback">❌ All Stations Offline</span>';
+            }
+        }
+
+        function displayCurrentConditions(obs) {
+            const tempC = obs.temperature.value;
+            const tempF = tempC !== null ? (tempC * 9/5 + 32).toFixed(1) : 'N/A';
+            const dewpointC = obs.dewpoint.value;
+            const dewpointF = dewpointC !== null ? (dewpointC * 9/5 + 32).toFixed(1) : 'N/A';
+            const windSpeed = obs.windSpeed.value !== null ? 
+                (obs.windSpeed.value * 0.621371).toFixed(0) : '0';
+            const windGust = obs.windGust.value !== null ? 
+                (obs.windGust.value * 0.621371).toFixed(0) : null;
+            const windDir = obs.windDirection.value || 0;
+
+            // Format observation time
+            const obsTime = obs.timestamp ? new Date(obs.timestamp).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }) : 'N/A';
+
+            // Check for high wind alert
+            const maxWind = Math.max(parseInt(windSpeed), parseInt(windGust || 0));
+            const windAlertClass = maxWind >= 30 ? 'wind-alert' : '';
+
+            const html = `
+                <div class="current-grid">
+                    <div class="metric">
+                        <div class="metric-label">Conditions</div>
+                        <div class="metric-value" style="font-size: 20px;">
+                            ${obs.textDescription || 'Unknown'}
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Temperature</div>
+                        <div class="metric-value large">
+                            ${tempF}<span class="metric-unit">°F</span>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Dew Point</div>
+                        <div class="metric-value">
+                            ${dewpointF}<span class="metric-unit">°F</span>
+                        </div>
+                    </div>
+                    <div class="metric ${windAlertClass}">
+                        <div class="metric-label">Wind ${maxWind >= 30 ? '⚠️ HIGH WIND' : ''}</div>
+                        <div class="metric-value">
+                            ${windSpeed}<span class="metric-unit">mph</span>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 14px; opacity: 0.9;">
+                            ${windDir}° ${windGust ? `| Gusts ${windGust} mph` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="obs-metadata">
+                    <div><strong>Station:</strong> ${currentStation || 'N/A'}</div>
+                    <div><strong>Observation Time:</strong> ${obsTime}</div>
+                </div>
+            `;
+
+            document.getElementById('currentConditions').innerHTML = html;
+        }
+
+        function displayAlerts(alerts) {
+            if (!alerts || alerts.length === 0) {
+                document.getElementById('alerts').innerHTML = 
+                    '<div class="no-alerts">✓ No Active Alerts</div>';
+                return;
+            }
+
+            // Filter out marine and beach alerts
+            const marineKeywords = [
+                'rip current',
+                'high surf',
+                'marine',
+                'small craft',
+                'gale',
+                'storm warning',
+                'hurricane force wind',
+                'special marine',
+                'coastal flood',
+                'beach hazard',
+                'high seas'
+            ];
+
+            const landAlerts = alerts.filter(alert => {
+                const eventLower = alert.properties.event.toLowerCase();
+                return !marineKeywords.some(keyword => eventLower.includes(keyword));
+            });
+
+            if (landAlerts.length === 0) {
+                document.getElementById('alerts').innerHTML = 
+                    '<div class="no-alerts">✓ No Active Land-Based Alerts</div>';
+                return;
+            }
+
+            const html = landAlerts.map(alert => {
+                const props = alert.properties;
+                let alertClass = 'alert';
+                
+                // Determine alert type by event name
+                const eventLower = props.event.toLowerCase();
+                if (eventLower.includes('warning')) {
+                    alertClass = 'alert warning';
+                } else if (eventLower.includes('watch')) {
+                    alertClass = 'alert watch';
+                } else if (eventLower.includes('advisory')) {
+                    alertClass = 'alert advisory';
+                }
+
+                return `
+                    <div class="${alertClass}">
+                        <h3>${props.event}</h3>
+                        <div class="alert-meta">
+                            <span>SEVERITY: ${props.severity}</span>
+                            <span>URGENCY: ${props.urgency}</span>
+                            <span>CERTAINTY: ${props.certainty}</span>
+                        </div>
+                        <p><strong>${props.headline || ''}</strong></p>
+                        <p style="margin-top: 10px;">${props.description ? 
+                            props.description.substring(0, 300) + '...' : ''}</p>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('alerts').innerHTML = html;
+        }
+
+        function displayHRRR(hourlyPeriods) {
+            const next12Hours = hourlyPeriods.slice(0, 12);
+            
+            let tableHTML = `
+                <div class="hrrr-table-container">
+                <table class="hrrr-table">
+                    <thead>
+                        <tr>
+                            <th>Hour</th>
+                            <th>Rain</th>
+                            <th>Temp</th>
+                            <th>Wind Gusts</th>
+                            <th>Weather</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            next12Hours.forEach(period => {
+                const time = new Date(period.startTime);
+                const hour = time.getHours();
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour % 12 || 12;
+                
+                const pop = period.probabilityOfPrecipitation.value || 0;
+                const precipClass = pop >= 40 ? 'precip-high' : '';
+                
+                // Parse wind speed and gusts
+                const windMatch = period.windSpeed.match(/(\d+)(?:\s+to\s+(\d+))?/);
+                const windSpeed = windMatch ? windMatch[1] : '0';
+                const windGust = windMatch && windMatch[2] ? windMatch[2] : windSpeed;
+                
+                const windClass = (parseInt(windGust) >= 30) ? 'wind-high' : '';
+                
+                // Get weather conditions from shortForecast
+                const weather = period.shortForecast || 'Clear';
+                
+                // Check for hazards in the detailed forecast
+                const hasHazard = period.detailedForecast && 
+                    (period.detailedForecast.toLowerCase().includes('thunder') ||
+                     period.detailedForecast.toLowerCase().includes('severe'));
+                const hazardIndicator = hasHazard ? '⚠️ ' : '';
+
+                tableHTML += `
+                    <tr>
+                        <td class="hour-cell">${displayHour} ${ampm}</td>
+                        <td class="precip-cell ${precipClass}">${pop}%</td>
+                        <td class="temp-cell">${period.temperature}°F</td>
+                        <td class="wind-cell ${windClass}">${windGust} mph</td>
+                        <td style="font-size: 11px;">${hazardIndicator}${weather}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+                </div>
+            `;
+
+            document.getElementById('hrrr').innerHTML = tableHTML;
+        }
+
+        function displayForecast(periods, updatedTime) {
+            // Get the next 10 periods (roughly 5 days - day and night)
+            const forecastPeriods = periods.slice(0, 10);
+            
+            // Format the forecast issuance time with error handling
+            let issuedDisplay = 'Not Available';
+            try {
+                if (updatedTime) {
+                    const issuedDate = new Date(updatedTime);
+                    if (!isNaN(issuedDate.getTime())) {
+                        issuedDisplay = issuedDate.toLocaleString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                            timeZoneName: 'short'
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Error formatting forecast timestamp:', e);
+            }
+            
+            let html = `
+                <div class="forecast-timestamp">
+                    <strong>Forecast Issued:</strong> ${issuedDisplay}
+                </div>
+            `;
+            
+            html += forecastPeriods.map(period => {
+                // Parse wind speed to check if >= 30 mph
+                const windMatch = period.windSpeed.match(/(\d+)/);
+                const windSpeed = windMatch ? parseInt(windMatch[1]) : 0;
+                const showWind = windSpeed >= 30;
+                
+                return `
+                    <div class="forecast-period">
+                        <h3>${period.name}</h3>
+                        <div class="forecast-temp">${period.temperature}°${period.temperatureUnit}</div>
+                        ${showWind ? `<div class="forecast-wind">⚠️ ${period.windSpeed} ${period.windDirection}</div>` : ''}
+                        <div class="forecast-detail"><strong>${period.shortForecast}</strong></div>
+                        <div class="forecast-detail">${period.detailedForecast}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('forecast').innerHTML = html;
+        }
+
+        async function fetchOutlooks() {
+            try {
+                const outlookData = {
+                    day1_convective: 'Not Expected',
+                    day2_convective: 'Not Expected', 
+                    day3_convective: 'Not Expected',
+                    day1_rainfall: 'Not Expected',
+                    day2_rainfall: 'Not Expected',
+                    day3_rainfall: 'Not Expected'
+                };
+
+                // Fetch SPC Day 1-3 Convective Outlooks
+                const spcDay1Url = `https://www.spc.noaa.gov/products/outlook/day1otlk_cat.lyr.geojson`;
+                const spcDay2Url = `https://www.spc.noaa.gov/products/outlook/day2otlk_cat.lyr.geojson`;
+                const spcDay3Url = `https://www.spc.noaa.gov/products/outlook/day3otlk_cat.lyr.geojson`;
+
+                try {
+                    const day1Response = await fetch(spcDay1Url);
+                    const day1Data = await day1Response.json();
+                    outlookData.day1_convective = parseConvectiveOutlook(day1Data, PARK_LAT, PARK_LON);
+                } catch (e) {
+                    console.log('SPC Day 1 unavailable');
+                }
+
+                try {
+                    const day2Response = await fetch(spcDay2Url);
+                    const day2Data = await day2Response.json();
+                    outlookData.day2_convective = parseConvectiveOutlook(day2Data, PARK_LAT, PARK_LON);
+                } catch (e) {
+                    console.log('SPC Day 2 unavailable');
+                }
+
+                try {
+                    const day3Response = await fetch(spcDay3Url);
+                    const day3Data = await day3Response.json();
+                    outlookData.day3_convective = parseConvectiveOutlook(day3Data, PARK_LAT, PARK_LON);
+                } catch (e) {
+                    console.log('SPC Day 3 unavailable');
+                }
+
+                // Fetch WPC Excessive Rainfall Outlooks
+                const wpcDay1Url = `https://www.wpc.ncep.noaa.gov/qpf/excessive_rainfall_outlook_geojson.php?day=1`;
+                const wpcDay2Url = `https://www.wpc.ncep.noaa.gov/qpf/excessive_rainfall_outlook_geojson.php?day=2`;
+                const wpcDay3Url = `https://www.wpc.ncep.noaa.gov/qpf/excessive_rainfall_outlook_geojson.php?day=3`;
+
+                try {
+                    const wpcDay1Response = await fetch(wpcDay1Url);
+                    const wpcDay1Data = await wpcDay1Response.json();
+                    outlookData.day1_rainfall = parseRainfallOutlook(wpcDay1Data, PARK_LAT, PARK_LON);
+                } catch (e) {
+                    console.log('WPC Day 1 unavailable');
+                }
+
+                try {
+                    const wpcDay2Response = await fetch(wpcDay2Url);
+                    const wpcDay2Data = await wpcDay2Response.json();
+                    outlookData.day2_rainfall = parseRainfallOutlook(wpcDay2Data, PARK_LAT, PARK_LON);
+                } catch (e) {
+                    console.log('WPC Day 2 unavailable');
+                }
+
+                try {
+                    const wpcDay3Response = await fetch(wpcDay3Url);
+                    const wpcDay3Data = await wpcDay3Response.json();
+                    outlookData.day3_rainfall = parseRainfallOutlook(wpcDay3Data, PARK_LAT, PARK_LON);
+                } catch (e) {
+                    console.log('WPC Day 3 unavailable');
+                }
+
+                displayOutlooks(outlookData);
+
+            } catch (error) {
+                console.error('Error fetching outlooks:', error);
+                document.getElementById('outlooks').innerHTML = 
+                    '<div class="error">Unable to load outlook data</div>';
+            }
+        }
+
+        function parseConvectiveOutlook(geojson, lat, lon) {
+            if (!geojson || !geojson.features) return 'Not Expected';
+
+            const categories = ['HIGH', 'MDT', 'ENH', 'SLGT', 'MRGL', 'TSTM'];
+            
+            for (let category of categories) {
+                for (let feature of geojson.features) {
+                    if (feature.properties && feature.properties.LABEL2) {
+                        const label = feature.properties.LABEL2.toUpperCase();
+                        if (label.includes(category)) {
+                            if (isPointInPolygon(lat, lon, feature.geometry)) {
+                                return formatCategory(category);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return 'Not Expected';
+        }
+
+        function parseRainfallOutlook(geojson, lat, lon) {
+            if (!geojson || !geojson.features) return 'Not Expected';
+
+            const categories = ['High', 'Moderate', 'Slight'];
+            
+            for (let category of categories) {
+                for (let feature of geojson.features) {
+                    if (feature.properties && feature.properties.VALID) {
+                        const risk = feature.properties.RISK || '';
+                        if (risk.toLowerCase() === category.toLowerCase()) {
+                            if (isPointInPolygon(lat, lon, feature.geometry)) {
+                                return category;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return 'Not Expected';
+        }
+
+        function isPointInPolygon(lat, lon, geometry) {
+            if (!geometry || !geometry.coordinates) return false;
+            
+            try {
+                let coords = geometry.coordinates;
+                if (geometry.type === 'MultiPolygon') {
+                    coords = coords[0];
+                }
+                if (coords && coords[0]) {
+                    coords = coords[0];
+                }
+
+                let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+                
+                for (let coord of coords) {
+                    const [cLon, cLat] = coord;
+                    minLat = Math.min(minLat, cLat);
+                    maxLat = Math.max(maxLat, cLat);
+                    minLon = Math.min(minLon, cLon);
+                    maxLon = Math.max(maxLon, cLon);
+                }
+
+                return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function formatCategory(category) {
+            const map = {
+                'TSTM': 'Thunderstorms',
+                'MRGL': 'Marginal',
+                'SLGT': 'Slight',
+                'ENH': 'Enhanced',
+                'MDT': 'Moderate',
+                'HIGH': 'High'
+            };
+            return map[category] || category;
+        }
+
+        function getCategoryClass(risk) {
+            const riskLower = risk.toLowerCase();
+            if (riskLower.includes('not expected')) return 'outlook-none';
+            if (riskLower.includes('thunderstorm')) return 'outlook-tstm';
+            if (riskLower.includes('marginal')) return 'outlook-marginal';
+            if (riskLower.includes('slight')) return 'outlook-slight';
+            if (riskLower.includes('enhanced')) return 'outlook-enhanced';
+            if (riskLower.includes('moderate')) return 'outlook-moderate';
+            if (riskLower.includes('high')) return 'outlook-high';
+            return '';
+        }
+
+        function displayOutlooks(data) {
+            const html = `
+                <table class="outlook-table">
+                    <thead>
+                        <tr>
+                            <th>Outlooks</th>
+                            <th>Day 1</th>
+                            <th>Day 2</th>
+                            <th>Day 3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="outlook-row-label">Severe Thunderstorm</td>
+                            <td class="${getCategoryClass(data.day1_convective)}">${data.day1_convective}</td>
+                            <td class="${getCategoryClass(data.day2_convective)}">${data.day2_convective}</td>
+                            <td class="${getCategoryClass(data.day3_convective)}">${data.day3_convective}</td>
+                        </tr>
+                        <tr>
+                            <td class="outlook-row-label">Excessive Rainfall</td>
+                            <td class="${getCategoryClass(data.day1_rainfall)}">${data.day1_rainfall}</td>
+                            <td class="${getCategoryClass(data.day2_rainfall)}">${data.day2_rainfall}</td>
+                            <td class="${getCategoryClass(data.day3_rainfall)}">${data.day3_rainfall}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('outlooks').innerHTML = html;
+        }
+
+        function loadRadar() {
+            // KMLB (Melbourne) radar covers Disney area well
+            const radarUrl = 'https://radar.weather.gov/ridge/standard/KMLB_0.gif';
+            
+            const html = `
+                <div class="radar-container">
+                    <img src="${radarUrl}" alt="KMLB Radar - Base Reflectivity" onerror="this.parentElement.innerHTML='<div class=error>Radar image temporarily unavailable</div>'">
+                    <div class="radar-timestamp">KMLB Base Reflectivity | Auto-refreshes every 5 minutes</div>
+                </div>
+            `;
+            
+            document.getElementById('radar').innerHTML = html;
+        }
+
+        function updateRefreshTime() {
+            const now = new Date();
+            document.getElementById('refreshTime').textContent = 
+                `Last Updated: ${now.toLocaleTimeString()} | Auto-refresh: 5 min`;
+        }
+
+        function refreshData() {
+            document.getElementById('currentConditions').innerHTML = '<div class="loading">Refreshing...</div>';
+            document.getElementById('alerts').innerHTML = '<div class="loading">Refreshing...</div>';
+            document.getElementById('radar').innerHTML = '<div class="loading">Refreshing...</div>';
+            document.getElementById('hrrr').innerHTML = '<div class="loading">Refreshing...</div>';
+            document.getElementById('forecast').innerHTML = '<div class="loading">Refreshing...</div>';
+            document.getElementById('outlooks').innerHTML = '<div class="loading">Refreshing...</div>';
+            fetchWeatherData();
+        }
+
+        // Initial load
+        fetchWeatherData();
+
+        // Auto-refresh every 5 minutes
+        setInterval(fetchWeatherData, 300000);
+    </script>
+</body>
+</html>
